@@ -1,0 +1,31 @@
+_format_version: "1.1"
+
+services:
+  - name: faktum
+    url: http://faktum.default.svc.nais.local
+    plugins:
+      - name: key-auth
+      - name: prometheus
+        enabled: true
+    routes:
+    - name: my-route
+      methods:
+        - GET
+      paths:
+        - /
+
+consumers:
+  - username: my-user
+    keyauth_credentials:
+      - key: my-key
+
+plugins:
+  - name: syslog
+    consumer: my-user
+    service: faktum
+  - name: correlation-id
+    service: faktum
+    config:
+      header_name: Kong-Request-ID
+      generator: uuid#counter
+      echo_downstream: false

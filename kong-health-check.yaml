@@ -1,0 +1,10 @@
+location /liveness {
+  content_by_lua_block {
+    ngx.say("OK")
+  }
+}
+location /readiness {
+  content_by_lua_block {
+    ngx.say("OK")
+  }
+}
