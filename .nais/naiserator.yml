@@ -19,11 +19,13 @@ spec:
     initialDelay: 10
     periodSeconds: 10
     failureThreshold: 30
+    port: 8001
   readiness:
     path: /status
     initialDelay: 10
     periodSeconds: 10
     failureThreshold: 30
+    port: 8001
   replicas:
     min: 1
     max: 1
@@ -38,7 +40,7 @@ spec:
     enabled: true
     path: /metrics
   cpuThresholdPercentage: 80
-  port: 8001
+  port: 8000
   env:
     - name: KONG_PREFIX
       value: /usr/local/kong
