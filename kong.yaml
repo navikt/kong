@@ -20,6 +20,10 @@ services:
     port: 8001
     plugins:
       - name: acl
+        config:
+          whitelist:
+            - kong-admin-group
+          hide_groups_header: true
       - name: key-auth
       - name: correlation-id
       - name: syslog
@@ -48,9 +52,3 @@ plugins:
   - name: key-auth
     config:
       hide_credentials: false
-  - name: acl
-    service: admin-api
-    config:
-      whitelist:
-        - kong-admin-group
-      hide_groups_header: true
