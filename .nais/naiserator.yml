@@ -39,7 +39,7 @@ spec:
   prometheus:
     enabled: true
     path: /metrics
-    port: 8001
+    port: "8001"
   cpuThresholdPercentage: 80
   port: 8000
   env:
