@@ -10,7 +10,9 @@ services:
       methods:
         - GET
       paths:
-        - /token
+        - /faktum
+      hosts:
+        - faktum.default.svc.nais.local
 
 consumers:
   - username: my-user
