@@ -47,7 +47,7 @@ spec:
       value: /usr/local/kong
     # Logging
     - name: KONG_LOG_LEVEL
-      value: warn
+      value: info
     - name: KONG_ADMIN_ACCESS_LOG
       value: /dev/stdout
     - name: KONG_ADMIN_ERROR_LOG

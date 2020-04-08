@@ -24,6 +24,9 @@ plugins:
   - name: syslog
     consumer: my-user
     service: faktum
+  - name: tcp-log
+    consumer: my-user
+    service: faktum
   - name: correlation-id
     service: faktum
     config:
