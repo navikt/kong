@@ -7,8 +7,8 @@ metadata:
   labels:
     team: plattformsikkerhet
 spec:
-  image: ybel/kong-test:3
-  # image: {{image}}
+  # image: ybel/kong-test:3
+  image: {{image}}
   ingresses:
     - https://kong.nais.preprod.local
   # {{#each ingresses}}

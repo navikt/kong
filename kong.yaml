@@ -5,14 +5,12 @@ services:
     url: http://faktum.default.svc.nais.local
     plugins:
       - name: key-auth
-      - name: prometheus
-        enabled: true
     routes:
-    - name: my-route
+    - name: faktum-route
       methods:
         - GET
       paths:
-        - /
+        - /token
 
 consumers:
   - username: my-user
