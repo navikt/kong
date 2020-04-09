@@ -54,6 +54,7 @@ plugins:
       hide_credentials: false
   - name: jwt
     config:
-      header_names: Kong-Authorization
+      header_names:
+        - Kong-Authorization
   - name: bot-detection
 
