@@ -2,18 +2,15 @@ kind: Application
 apiVersion: nais.io/v1alpha1
 metadata:
   name: kong
-  # namespace: {{namespace}}
-  namespace: king
+  namespace: {{namespace}}
   labels:
     team: plattformsikkerhet
 spec:
-  # image: ybel/kong-test:3
   image: {{image}}
   ingresses:
-    - https://kong.nais.preprod.local
-  # {{#each ingresses}}
-  #   - "{{this}}"
-  #       {{/each}}
+  {{#each ingresses}}
+     - "{{this}}"
+    {{/each}}
   liveness:
     path: /status
     initialDelay: 10
@@ -43,43 +40,7 @@ spec:
   cpuThresholdPercentage: 80
   port: 8000
   env:
-    - name: KONG_PREFIX
-      value: /usr/local/kong
-    # Logging
-    - name: KONG_LOG_LEVEL
-      value: info
-    - name: KONG_ADMIN_ACCESS_LOG
-      value: /dev/stdout
-    - name: KONG_ADMIN_ERROR_LOG
-      value: /dev/stderr
-    - name: KONG_PROXY_ACCESS_LOG
-      value: /dev/stdout
-    - name: KONG_PROXY_ERROR_LOG
-      value: /dev/stderr
-    # Listen
-    - name: KONG_ADMIN_LISTEN
-      value: 0.0.0.0:8001, 0.0.0.0:8444 ssl
-    # Database
-    - name: KONG_DATABASE
-      value: "off"
-    - name: KONG_DECLARATIVE_CONFIG
-      value: kong.yaml
-    # Caching
-    - name: KONG_MEM_CACHE_SIZE
-      value: "512m"
-    # Plugins
-    - name: KONG_PLUGINS
-      value: bundled,correlation-id,syslog,jwt,rate-limiting
-    # Error type
-    - name: KONG_ERROR_DEFAULT_TYPE
-      value: application/json
-  # The absolute path to the SSL certificate for proxy_listen values with SSL enabled.
-  # - name: KONG_SSL_CERT
-  #   value: path/to/cert
-  # - name: KONG_SSL_CERT_KEY
-  #   value: path/to/cert/key
-
-   # {{#each env}}
-   #    - "{{this.name}}"
-   #       "{{this.value}}"
-   #   {{/each}}
+  {{#each envs}}
+    - "{{this.name}}"
+      "{{this.value}}"
+    {{/each}}
