@@ -16,13 +16,13 @@ spec:
     initialDelay: 10
     periodSeconds: 10
     failureThreshold: 30
-    port: 8001
+    port: {{admin-port}}
   readiness:
     path: /status
     initialDelay: 10
     periodSeconds: 10
     failureThreshold: 30
-    port: 8001
+    port: {{admin-port}}
   replicas:
     min: 1
     max: 1
@@ -36,9 +36,9 @@ spec:
   prometheus:
     enabled: true
     path: /metrics
-    port: "8001"
+    port: "{{admin-port}}"
   cpuThresholdPercentage: 80
-  port: 8000
+  port: {{proxy-port}}
   env:
   {{#each envs}}
     - name: "{{this.name}}"

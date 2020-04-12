@@ -1,6 +1,9 @@
 namespace: king
 ingresses:
   - https://kong.nais.preprod.local
+admin-port: 8001
+proxy-port: 8000
+https-port: 8443
 envs:
   - name: KONG_PREFIX
     value: /usr/local/kong
@@ -28,7 +31,7 @@ envs:
     value: "512m"
   # Plugins
   - name: KONG_PLUGINS
-    value: bundled,correlation-id,syslog,jwt,rate-limiting
+    value: bundled,correlation-id,syslog,jwt,rate-limiting,3rd-party-oauth
   # Error type
   - name: KONG_ERROR_DEFAULT_TYPE
     value: application/json
