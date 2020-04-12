@@ -52,9 +52,5 @@ plugins:
   - name: key-auth
     config:
       hide_credentials: false
-  - name: jwt
-    config:
-      header_names:
-        - Kong-Authorization
   - name: bot-detection
 
