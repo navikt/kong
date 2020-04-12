@@ -9,8 +9,7 @@ COPY kong.conf /etc/kong/kong.conf
 COPY init-scripts/ /init-scripts
 COPY entrypoint.sh/ /entrypoint.sh
 RUN chmod +x /init-scripts
-RUN chmod +x /entrypoint.sh
-RUN /entrypoint.sh
+RUN chmod +x /entrypoint.sh && /entrypoint.sh
 
 # Add external Oauth2
 RUN apk add --no-cache libressl-dev build-base
