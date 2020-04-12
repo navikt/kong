@@ -6,7 +6,10 @@ COPY kong.yaml /
 COPY kong.conf /etc/kong/kong.conf
 
 # init some envs
+COPY init-scripts/ /init-scripts
+COPY entrypoint.sh/ /entrypoint.sh
 RUN chmod +x /init-scripts
+RUN chmod +x /entrypoint.sh
 RUN /entrypoint.sh
 
 # Add external Oauth2

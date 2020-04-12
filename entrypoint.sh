@@ -8,3 +8,7 @@ if test -d /init-scripts; then
 else
   echo "/init-scripts does not exist, skipping startup scripts"
 fi
+
+if test -e /run-script.sh; then
+  exec /run-script.sh $@
+fi
