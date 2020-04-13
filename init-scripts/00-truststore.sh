@@ -5,6 +5,7 @@ if test -r "${NAV_TRUSTSTORE_PATH}"; then
     echo Truststore is corrupt, or bad password
     exit 1
   fi
+  echo Setting truststore
   export KONG_SSL_CERT="${NAV_TRUSTSTORE_PATH}"
   export KONG_SSL_CERT_KEY="${NAV_TRUSTSTORE_PASSWORD}"
 fi
