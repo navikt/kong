@@ -1,20 +1,21 @@
 _format_version: "1.1"
 
 services:
-  - name: faktum
+  - name: faktum-default
     url: http://faktum.default.svc.nais.local
     plugins:
       - name: key-auth
-      - name: correlation-id
-      - name: syslog
+      - name: acl
+        config:
+          whitelist:
+            - faktum-group
+          hide_groups_header: true
     routes:
     - name: faktum-route
-      methods:
-        - GET
       paths:
-        - /faktum
+        - /
       hosts:
-        - faktum.default.svc.nais.local
+        - faktum.default
   - name: admin-api
     host: 0.0.0.0
     port: 8001
@@ -25,8 +26,6 @@ services:
             - kong-admin-group
           hide_groups_header: true
       - name: key-auth
-      - name: correlation-id
-      - name: syslog
     routes:
     - name: kong-admin-route
       paths:
@@ -36,11 +35,16 @@ consumers:
   - username: my-user
     keyauth_credentials:
       - key: my-key
+    acls:
+      - group: faktum-group
   - username: admin1
     keyauth_credentials:
       - key: admin-key
     acls:
       - group: kong-admin-group
+  - username: another-user
+    keyauth_credentials:
+      - key: another-key
 
 plugins:
   - name: syslog
@@ -49,8 +53,6 @@ plugins:
       header_name: Kong-Request-ID
       generator: uuid#counter
       echo_downstream: true
-  - name: key-auth
-    config:
-      hide_credentials: false
   - name: bot-detection
+  - name: prometheus
 

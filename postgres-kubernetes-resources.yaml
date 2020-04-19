@@ -1,0 +1,80 @@
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config-demo
+  labels:
+    app: postgres
+    team: plattformsikkerhet
+  namespace: king
+data:
+  POSTGRES_DB: kong
+  POSTGRES_USER: kong
+  POSTGRES_PASSWORD: kong
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+    team: plattformsikkerhet
+  namespace: king
+spec:
+  ports:
+    - port: 5432
+      name: postgres
+  type: ClusterIP
+  sessionAffinity: None
+  selector:
+    app: postgres
+---
+# App
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: postgres
+    team: plattformsikkerhet
+  name: kong-database
+  namespace: king
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        team: plattformsikkerhet
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          envFrom:
+            - configMapRef:
+                name: postgres-config-demo
+          ports:
+            - containerPort: 5432
+              name: postgredb
+---
+# INGRESS
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    app: postgres
+    team: plattformsikkerhet
+  name: postgres
+  namespace: king
+spec:
+  rules:
+    - host: postgres.nais.preprod.local
+      http:
+        paths:
+          - backend:
+              serviceName: postgres
+              servicePort: 80
+            path: /

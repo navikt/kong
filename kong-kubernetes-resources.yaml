@@ -3,188 +3,174 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    name: kong
+    app: kong
+    team: plattformsikkerhet
   name: kong
   namespace: king
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: kong
+      app: kong
   template:
     metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8001"
+        prometheus.io/scrape: "true"
       labels:
-        name: kong
+        app: kong
       namespace: king
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: KONG_PG_PORT
+              value: "5432"
+            - name: KONG_PG_HOST
+              value: postgres.king.svc.nais.local
+          command: [ "/bin/sh", "-c", "until nc -zv $KONG_PG_HOST $KONG_PG_PORT -w1; do echo 'waiting for db'; sleep 1; done" ]
+        - name: kong-migration-up
+          image: kong
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: KONG_PG_PASSWORD
+              value: kong
+            - name: KONG_PG_HOST
+              value: postgres.king.svc.nais.local
+            - name: KONG_NGINX_WORKER_PROCESSES
+              value: "1"
+          command: [ "/bin/sh", "-c", "kong migrations bootstrap" ]
       containers:
         - name: kong
-          image: ybel/kong-test:3
+          image: ybel/kong-test:10
+          # docker build -t kong_nodb . && docker tag kong_nodb ybel/kong-test:9 && docker push ybel/kong-test:9
           # image: docker.pkg.github.com/navikt/kong/kong:2020.04.03-998b913
           livenessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /liveness
-              port: 8001
-              scheme: HTTP
-          readinessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /readiness
-              port: 8001
-              scheme: HTTP
-          #livenessProbe:
-          #  exec:
-          #    command:
-          #      - kong
-          #      - health
-          #  failureThreshold: 15
-          #  periodSeconds: 5
-          #  timeoutSeconds: 2
+            exec:
+              command:
+                - kong
+                - health
+            failureThreshold: 15
+            periodSeconds: 5
+            timeoutSeconds: 2
           ports:
             - containerPort: 8000
+              name: http
             - containerPort: 8001
+              name: http-admin
             - containerPort: 8443
+              name: https
             - containerPort: 8444
           env:
+            - name: KONG_PREFIX
+              value: /usr/local/kong
+            # Logging
+            - name: KONG_LOG_LEVEL
+              value: info
             - name: KONG_ADMIN_ACCESS_LOG
               value: /dev/stdout
             - name: KONG_ADMIN_ERROR_LOG
               value: /dev/stderr
-            - name: KONG_ADMIN_LISTEN
-              value: 0.0.0.0:8001, 0.0.0.0:8444 ssl
-            - name: KONG_DATABASE
-              value: "off"
-            - name: KONG_DECLARATIVE_CONFIG
-              value: kong.yaml
             - name: KONG_PROXY_ACCESS_LOG
               value: /dev/stdout
             - name: KONG_PROXY_ERROR_LOG
               value: /dev/stderr
+            # Listen
+            - name: KONG_ADMIN_LISTEN
+              value: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+            # Database
+            #- name: KONG_DATABASE
+            #  value: "off"
+            #- name: KONG_DECLARATIVE_CONFIG
+            #  value: kong.yaml
+            - name: KONG_DATABASE
+              value: postgres
+            - name: KONG_PG_DATABASE
+              value: kong
+            - name: KONG_PG_HOST
+              value: postgres.king.svc.nais.local
+            - name: KONG_PG_USER
+              value: kong
+            - name: KONG_PG_PASSWORD
+              value: kong
+            - name: KONG_PG_PORT
+              value: "5432"
+            - name: KONG_PG_SSL
+              value: "off"
+            # Caching
             - name: KONG_MEM_CACHE_SIZE
               value: "512m"
+            # Plugins
             - name: KONG_PLUGINS
-              value: bundled,correlation-id,syslog,jwt,rate-limiting
-            - name: KONG_NGINX_PROXY_INCLUDE
-             # valueFrom:
-             #   configMapKeyRef:
-             #     name: kong-proxy
-             #     key: proxy_health_check.conf
-              value: /usr/local/kong/kube/proxy_health_check.conf
+              value: bundled,correlation-id,syslog,jwt,rate-limiting,3rd-party-oauth,ip-restriction
+            # Error type
+            - name: KONG_ERROR_DEFAULT_TYPE
+              value: application/json
           volumeMounts:
-            - name: kong-proxy
-              mountPath: /usr/local/kong/kube
+            - name: ca-bundle-pem
+              mountPath: /etc/pki/tls/certs/
       volumes:
-        - name: kong-proxy
+        - name: ca-bundle-pem
           configMap:
-            name: kong-proxy
+            name: ca-bundle-pem
             items:
-              - key: proxy_health_check.conf
-                path: proxy_health_check.conf
+              - key: ca-bundle.pem
+                path: ca-bundle.crt
       restartPolicy: Always
+# https://github.com/Kong/kong-dist-kubernetes/blob/master/kong-control-plane-postgres.yaml
 ---
 # KONG-SERVICE
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    name: kong
-  name: kong-service
+    app: kong
+    team: plattformsikkerhet
+  name: kong
+  namespace: king
 spec:
   ports:
-    - name: "8000"
-      port: 8000
-      targetPort: 8000
-    - name: "8001"
+    - name: http
+      port: 80
+      targetPort: http
+    - name: http-admin
       port: 8001
-      targetPort: 8001
-    - name: "8443"
+      targetPort: http-admin
+    - name: https
       port: 8443
-      targetPort: 8443
+      targetPort: https
     - name: "8444"
       port: 8444
       targetPort: 8444
   selector:
-    name: kong
-  type: NodePort
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    name: konga
-  name: konga
-  namespace: king
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      name: konga
-  template:
-    metadata:
-      labels:
-        name: konga
-      namespace: king
-    spec:
-      containers:
-        - name: konga
-          image: pantsel/konga:latest
-          livenessProbe:
-            exec:
-              command:
-                - curl
-                - f
-                - localhost
-            failureThreshold: 15
-            periodSeconds: 5
-            timeoutSeconds: 2
-          ports:
-            - containerPort: 1337
-          env:
-            - name: NODE_ENV
-              value: development
-            # - name: DB_HOST
-            #   value: kong-database
-      restartPolicy: Always
----
-# GUI - KONGA - SERVICE
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    name: konga
-  name: konga-service
-spec:
-  ports:
-    - name: "1337"
-      port: 1337
-      targetPort: 1337
-  selector:
-    name: konga
-  type: NodePort
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: king
+    app: kong
+  sessionAffinity: None
+  type: ClusterIP
 ---
 # INGRESS
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: kong-ingress
   annotations:
-    rewrite-target: /$1
+    prometheus.io/path: /metric
+    prometheus.io/scrape: "true"
+  labels:
+    app: kong
+    team: plattformsikkerhet
+  name: kong
+  namespace: king
 spec:
   rules:
-    - host: kong.nais.local
+    - host: kong.nais.preprod.local
       http:
         paths:
-          - path: /
-            backend:
-              serviceName: kong-service
-              servicePort: 8001
-
+          - backend:
+              serviceName: kong
+              servicePort: 80
+            path: /
 # Deploy config
 # minikube kubectl apply -- -f <path-to-file>
 
